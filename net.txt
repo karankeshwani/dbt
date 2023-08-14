@@ -1,0 +1,326 @@
+//BOL
+
+namespace BOL
+{
+
+    public enum Book
+    {
+        MATH,SCI,ENG,HINDI
+    }
+    public class Author
+    {
+        private int id;
+        private string name;    
+        private Book books;
+        private DateOnly publishDate;
+        private double price;
+
+
+        public Author() { }
+
+        public Author(int id) { this.Id = id; }
+
+        public Author(int id, string name, Book book, DateOnly publishDate, double price)
+        {
+            this.Id = id;
+            this.Name = name;
+            this.Books = book;
+            this.PublishDate = publishDate;
+            this.Price = price;
+        }
+
+        public int Id { get => id; set => id = value; }
+        public string Name { get => name; set => name = value; }
+        public Book Books { get => books; set => books = value; }
+        public DateOnly PublishDate { get => publishDate; set => publishDate = value; }
+        public double Price { get => price; set => price = value; }
+
+        public override string ToString()
+        {
+            return $"ID:{Id}, Name: {Name}, Book: {Books}, publishDate: {PublishDate}, price: {Price}  \n";
+        }
+    }
+}
+
+
+
+-------
+
+
+//DAL  --- get/post/delete
+
+using BOL;
+using MySql.Data.MySqlClient;
+using System.Linq.Expressions;
+using System.Net.NetworkInformation;
+using System.Security.Cryptography;
+
+namespace DAL
+{
+    public class DbManager
+    {
+        //public static string conString = @"server=localhost;port=3306;user=root; password=Swap@1998;database=dotnet";
+        public static string conString = @"server=localhost;port=3306;user=root; password=root123;database=dotnet";
+
+        public static List<Author> getAllAuthors()
+        {
+            List<Author> aList = new List<Author>();
+
+            MySqlConnection conn= new MySqlConnection();
+            conn.ConnectionString = conString;
+
+            try
+            {
+                conn.Open();
+                MySqlCommand cmd = new MySqlCommand();
+                cmd.Connection = conn;
+                string query = "select * from author";
+                cmd.CommandText = query;
+                MySqlDataReader reader = cmd.ExecuteReader();   //for get query
+                while (reader.Read())
+                {
+                    //inka aur db ke andar name shud be same
+                    int id = int.Parse(reader["id"].ToString());
+                    string name = reader["name"].ToString();
+                    Book book = Enum.Parse<Book>(reader["book"].ToString());
+                    DateOnly pdate = DateOnly.FromDateTime(DateTime.Parse(reader["pdate"].ToString()));
+                    double pri = double.Parse(reader["price"].ToString());
+
+                    Author authList = new Author(id, name, book, pdate, pri);
+                    aList.Add(authList);
+                }
+
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            finally { conn.Close(); }    
+            return aList;
+        
+        }
+
+
+        public static void AddAuthor(Author auth)
+        {
+            MySqlConnection con = new MySqlConnection();
+            con.ConnectionString = conString;
+            try
+            {
+                con.Open();
+                string query = $"insert into author values({auth.Id},'{auth.Name}','{auth.Books}','{auth.PublishDate.ToString("yyyy-MM-dd")}',{auth.Price})";
+                MySqlCommand cmd = new MySqlCommand(query, con);
+                cmd.Connection = con;
+                cmd.ExecuteNonQuery();   //for dml queries
+
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e.Message);   
+            }
+            finally { con.Close(); }    
+
+        }
+
+        public static void DeleteAuthor(Author auth)
+        {
+            MySqlConnection con = new MySqlConnection();
+            con.ConnectionString=conString;
+
+            try
+            {
+                con.Open();
+                string query = $"delete from author where id = {auth.Id}";
+                MySqlCommand cmd = new MySqlCommand( query, con);
+                cmd.Connection = con;
+                cmd.ExecuteNonQuery();
+            }
+            catch(Exception e) {
+                Console.WriteLine(e.Message);
+
+            }
+            finally { con.Close(); }    
+        }
+    }
+}
+
+
+---------
+
+
+//views
+//home
+
+//ShowAuthors(.cshtml)
+
+
+@using BOL;
+@using DAL;
+
+@{
+    ViewData["Title"] = "ShowAuthors";
+}
+
+<div>
+<h1>ShowAuthors</h1>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col">id</th>
+            <th scope="col">name</th>
+            <th scope="col">book</th>
+            <th scope="col">publishDate</th>
+            <th scope="col">price</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            //List<Author> aList = ViewBag.myList;
+            //@foreach(Author a in alist){ <p>@a</p>}
+            @foreach(Author a in ViewBag.ListOfAuthors)
+            {
+                <tr>
+                    <td>@a.Id</td>
+                    <td>@a.Name</td>
+                    <td>@a.Books</td>
+                    <td>@a.PublishDate</td>
+                    <td>@a.Price</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+
+---
+//Add(.cshtml)
+
+
+@using BOL;
+@using DAL;
+
+
+@{
+    ViewData["Title"] = "AddAuthor";
+}
+
+ 
+
+<html>
+<head>
+    <h1>Author Form</h1>
+</head>
+<body>
+    <form action="/Home/AddAuthor" method="post">
+        <table>
+            <tr>
+                <td><label name="id">ID : </label></td>
+                <td><input type="number" id="id" name="id" /></td>
+            </tr>
+            <tr>
+                <td><label name="Name"> Name : </label></td>
+                <td><input type="text" id="Name" name="Name" /></td>
+            </tr>
+           
+            <tr>
+                <td><label name="book">Book : </label></td>
+                <td><input type="text" id="book" name="book" /></td>
+            </tr>
+            <tr>
+                <td><label name="pdate">Publishing Date : </label></td>
+                <td><input type="text" id="pdate" name="pdate" /></td>
+            </tr>
+            <tr>
+                <td><label name="pri">Price : </label></td>
+                <td><input type="number" id="pri" name="pri" /></td>
+            </tr>
+            <tr>
+                <td><button type="submit">Add</button></td>
+            </tr>
+        </table>
+    </form>
+
+</body>
+</html>
+
+---
+//Delete(.cshtml)
+
+@{
+    ViewData["Title"] = "DeleteAuthor";
+}
+
+<
+
+<html>
+<head>
+   <h1>DeleteAuthor</h1>
+</head>
+<body>
+    <form action="/Home/DeleteAuthor" method="post">
+        <table>
+            <tr>
+                <td><label name="id">ID : </label></td>
+                <td><input type="number" id="id" name="id" /></td>
+            </tr>
+          
+            <tr>
+                <td><button type="submit">Delete</button></td>
+            </tr>
+        </table>
+    </form>
+
+</body>
+</html>
+
+
+
+--------
+//Layout.cshtml
+
+<li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="DeleteAuthor">DeletingAuthors</a>
+                        </li>
+
+
+
+----
+//HomeController.cs
+
+//get
+public IActionResult ShowAuthors(){
+            List<Author> aList=DbManager.getAllAuthors();
+            ViewBag.ListOfAuthors=aList;     // listofauthors showAuthors se uthaye h
+            return View();  
+        }
+
+//add
+        [HttpPost]
+        public IActionResult AddAuthor(string id, string name, string book, string pdate, string pri)
+        {
+            // author = new Author();
+           // Author author = new Author { Id=id, Name=name, Books=Enum.Parse<Book>(book), PublishDate=pdate, Price=pri};
+           Author author = new Author( int.Parse(id),name,Enum.Parse<Book>(book),DateOnly.FromDateTime(DateTime.Parse(pdate)),double.Parse(pri));
+            DbManager.AddAuthor(author);
+            
+            return RedirectToAction("ShowAuthors");
+        }
+
+//delete
+
+public IActionResult DeleteAuthor(string id)
+        {
+            Author auth =new Author(int.Parse(id));
+            DbManager.DeleteAuthor(auth);
+            return RedirectToAction("ShowAuthors");
+        }
+
+
+---------
+
+
+
+
+To find information about trigger status , which of the following views are appropriate
