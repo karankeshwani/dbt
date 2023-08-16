@@ -1,0 +1,84 @@
+appsettings.json
+
+"ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;database=dotnetp;user=root;password=root123;port=3306"
+  },
+
+
+
+
+-----
+//program.cs
+
+var builder = WebApplication.CreateBuilder(args);
+
+            // Add services to the container.
+            builder.Services.AddControllersWithViews();
+
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+            builder.Services.AddDbContext<ApplicationDBContext>(options =>
+            {
+                options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+
+            });
+
+var app = builder.Build();
+
+
+-------
+//dependencies
+
+Efrmwrkcore
+Efrmwrkcore.Retaional
+Efrmwrkcore.SqlServer
+Efrmwrkcore.Tools
+Mysql.Efrmwrkcore
+microsoft.VS.Web.CodeGen.Design
+Pomelo.Efrmwrkcore.Mysql
+
+----
+//Data folder k andar
+//ApplicationDbContext.cs
+
+ public class ApplicationDBContext:DbContext
+    {
+        public ApplicationDBContext(DbContextOptions<ApplicationDBContext> options ) : base( options ) { }
+
+        public DbSet<Movie> Movies { get; set; }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder); 
+        }
+
+    }
+
+
+------
+
+//models me movie.cs
+ public class Movie
+    {
+        [Key]
+        public int Id { get; set; }
+        [Required(ErrorMessage = "please enter sahi mname: " )]
+        public string MuviName { get; set; }
+        [Required(ErrorMessage = "please enter sahi pname: ")]
+        public string producerName { get; set; }
+        [Required(ErrorMessage = "please enter sahi duration: ")]
+        public int duration { get; set; }
+        [Required(ErrorMessage = "please enter sahi dhan: ")]
+        public double ticketCost { get; set; }
+    }
+
+
+---
+// tools me - package console 
+
+add-migration newMgr
+update-database
+
+
+
+
+
